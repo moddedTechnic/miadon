@@ -52,7 +52,7 @@ impl Domain {
 }
 
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum ResourceRecordType {
     A,
     Options,
@@ -120,12 +120,18 @@ impl ResourceRecordData {
     }
 }
 
-impl Into<ResourceRecordType> for ResourceRecordData {
+impl Into<ResourceRecordType> for &ResourceRecordData {
     fn into(self) -> ResourceRecordType {
         match self {
-            Self::A(_) => ResourceRecordType::A,
-            Self::Options(_) => ResourceRecordType::Options,
+            ResourceRecordData::A(_) => ResourceRecordType::A,
+            ResourceRecordData::Options(_) => ResourceRecordType::Options,
         }
+    }
+}
+
+impl Into<ResourceRecordType> for ResourceRecordData {
+    fn into(self) -> ResourceRecordType {
+        (&self).into()
     }
 }
 
@@ -479,5 +485,14 @@ impl Message {
         self.answers.iter().for_each(|a| a.write_to_stream(stream));
         self.authoritative_records.iter().for_each(|ar| ar.write_to_stream(stream));
         self.additional_records.iter().for_each(|ar| ar.write_to_stream(stream));
+    }
+
+    pub fn with_id(self, id: u16) -> Self {
+        Self {
+            id, flags: self.flags,
+            questions: self.questions, answers: self.answers,
+            authoritative_records: self.authoritative_records,
+            additional_records: self.additional_records,
+        }
     }
 }
